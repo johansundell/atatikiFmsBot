@@ -3,14 +3,17 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/kardianos/service"
 )
 
 var (
@@ -63,37 +66,47 @@ func main() {
 		return
 	}
 
-	Token = settings.Token
-	dg, err := discordgo.New("Bot " + Token)
-	if err != nil {
-		fmt.Println("error creating Discord session,", err)
-		return
+	svcFlag := flag.String("service", "", "Control the system service.")
+	flag.Parse()
+
+	svcConfig := &service.Config{
+		Name:        "fmsBot",
+		DisplayName: "fmsBot",
+		Description: "fmsBot is a simple bot",
 	}
 
-	// Get the account information.
-	u, err := dg.User("@me")
+	prg := &program{}
+	s, err := service.New(prg, svcConfig)
 	if err != nil {
-		fmt.Println("error obtaining account details,", err)
-		return
+		log.Fatal(err)
+	}
+	errs := make(chan error, 5)
+	logger, err = s.Logger(errs)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	// Store the account ID for later use.
-	BotID = u.ID
+	go func() {
+		for {
+			err := <-errs
+			if err != nil {
+				log.Print(err)
+			}
+		}
+	}()
 
-	// Register messageCreate as a callback for the messageCreate events.
-	dg.AddHandler(messageCreate)
-
-	// Open the websocket and begin listening.
-	err = dg.Open()
-	if err != nil {
-		fmt.Println("error opening connection,", err)
+	if len(*svcFlag) != 0 {
+		err := service.Control(s, *svcFlag)
+		if err != nil {
+			log.Printf("Valid actions: %q\n", service.ControlAction)
+			log.Fatal(err)
+		}
 		return
 	}
-
-	fmt.Println("Bot is now running.  Press CTRL-C to exit.")
-	// Simple way to keep program running until CTRL-C is pressed.
-	<-make(chan struct{})
-	return
+	err = s.Run()
+	if err != nil {
+		logger.Error(err)
+	}
 }
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
