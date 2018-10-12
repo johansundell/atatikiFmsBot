@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/johansundell/atatikiFmsBot/fmsadmin"
 	"github.com/kardianos/service"
 )
 
@@ -52,6 +53,10 @@ func (p *program) run() error {
 	go func() {
 		// Open the websocket and begin listening.
 		err = dg.Open()
+		server = fmsadmin.NewServer(settings.Url, settings.User, settings.Pass)
+		if err := server.Login(); err != nil {
+			logger.Error("Could not login")
+		}
 		if err != nil {
 			fmt.Println("error opening connection,", err)
 			logger.Info(err)
@@ -62,6 +67,7 @@ func (p *program) run() error {
 		select {
 		case <-p.exit:
 			dg.Close()
+			server.Logout()
 			return nil
 		}
 	}

@@ -13,6 +13,7 @@ import (
 	"sync"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/johansundell/atatikiFmsBot/fmsadmin"
 	"github.com/kardianos/service"
 )
 
@@ -45,6 +46,7 @@ const (
 
 var botFuncs map[commandFunc]func(ctx *context.Context, command string) (string, error) = make(map[commandFunc]func(ctx *context.Context, command string) (string, error))
 var lockMap = sync.RWMutex{}
+var server fmsadmin.Server
 
 func main() {
 	ex, err := os.Executable()

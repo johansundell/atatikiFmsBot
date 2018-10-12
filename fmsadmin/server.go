@@ -5,8 +5,8 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -15,7 +15,9 @@ type Server struct {
 	user      string
 	pass      string
 	token     string
-	tokenTime time.Time
+	tokenTime time.Time // TODO: Are we using this
+	sync.RWMutex
+	quit chan struct{}
 }
 
 func NewServer(url, user, pass string) Server {
@@ -59,6 +61,25 @@ func (s *Server) Login() error {
 	if loginResult.Result == 0 {
 		s.tokenTime = time.Now()
 		s.token = loginResult.Token
+
+		// We have a token, keep it and renew when needed
+		ticker := time.NewTicker(14 * time.Minute)
+		s.quit = make(chan struct{})
+		go func() {
+			for {
+				select {
+				case <-ticker.C:
+					s.Lock()
+					s.Logout()
+					s.Login()
+					s.Unlock()
+
+				case <-s.quit:
+					ticker.Stop()
+					return
+				}
+			}
+		}()
 	}
 
 	return nil
@@ -90,7 +111,7 @@ func (s *Server) Logout() error {
 	if logoutInfo.Result != 0 {
 		return errors.New("Failed to logout")
 	}
-	fmt.Println("We could log out")
+	close(s.quit)
 	return nil
 }
 

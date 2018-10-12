@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-
-	"github.com/johansundell/atatikiFmsBot/fmsadmin"
 )
 
 func init() {
@@ -22,13 +20,7 @@ func init() {
 				if err != nil {
 					return "", err
 				}
-
-				s := fmsadmin.NewServer(settings.Url, settings.User, settings.Pass)
-				if err := s.Login(); err != nil {
-					return "", err
-				}
-				err = s.OpenFile(id)
-				s.Logout()
+				err = server.OpenFile(id)
 				if err != nil {
 					return err.Error(), nil
 				}

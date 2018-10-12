@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-
-	"github.com/johansundell/atatikiFmsBot/fmsadmin"
 )
 
 func init() {
@@ -24,12 +22,7 @@ func init() {
 				}
 				message := strs[2]
 
-				s := fmsadmin.NewServer(settings.Url, settings.User, settings.Pass)
-				if err := s.Login(); err != nil {
-					return "", err
-				}
-				defer s.Logout()
-				err = s.Close(id, message)
+				err = server.Close(id, message)
 				if err != nil {
 					return err.Error(), nil
 				}

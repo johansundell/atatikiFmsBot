@@ -3,8 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-
-	"github.com/johansundell/atatikiFmsBot/fmsadmin"
+	//	"github.com/johansundell/atatikiFmsBot/fmsadmin"
 	//	"net/http"
 )
 
@@ -14,12 +13,9 @@ func init() {
 	defer lockMap.Unlock()
 	botFuncs[key] = func(ctx *context.Context, command string) (string, error) {
 		if command == key.command {
-			s := fmsadmin.NewServer(settings.Url, settings.User, settings.Pass)
-			if err := s.Login(); err != nil {
-				return "", err
-			}
-			files, err := s.GetFiles()
-			s.Logout()
+
+			files, err := server.GetFiles()
+
 			if err != nil {
 				return "", err
 			}
