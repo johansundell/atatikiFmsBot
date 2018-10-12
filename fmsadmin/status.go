@@ -1,7 +1,6 @@
 package fmsadmin
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"net/http"
 )
@@ -22,11 +21,7 @@ func (s *Server) GetStatus() (*Status, error) {
 	}
 	req.Header.Add("Authorization", "Bearer "+s.token)
 	req.Header.Add("Content-Type", "application/json")
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
-	resp, err := client.Do(req)
+	resp, err := getClient().Do(req)
 	if err != nil {
 		return nil, err
 	}

@@ -24,6 +24,14 @@ func NewServer(url, user, pass string) Server {
 	return Server{url: url, user: user, pass: pass}
 }
 
+func getClient() *http.Client {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	return client
+}
+
 func (s *Server) Login() error {
 	url := s.url + "/fmi/admin/api/v1/user/login"
 	loginInfo := struct {
@@ -93,11 +101,7 @@ func (s *Server) Logout() error {
 	}
 	req.Header.Add("Authorization", "Bearer "+s.token)
 	req.Header.Add("Content-Type", "application/json")
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
-	resp, err := client.Do(req)
+	resp, err := getClient().Do(req)
 	if err != nil {
 		return err
 	}
@@ -123,11 +127,7 @@ func (s *Server) GetFiles() (f Files, err error) {
 	}
 	req.Header.Add("Authorization", "Bearer "+s.token)
 	req.Header.Add("Content-Type", "application/json")
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
-	resp, err := client.Do(req)
+	resp, err := getClient().Do(req)
 	if err != nil {
 		return f, err
 	}
