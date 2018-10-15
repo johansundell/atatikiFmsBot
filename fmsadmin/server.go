@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -17,7 +18,8 @@ type Server struct {
 	token     string
 	tokenTime time.Time // TODO: Are we using this
 	sync.RWMutex
-	quit chan struct{}
+	quit            chan struct{}
+	isAuthenticated bool
 }
 
 func NewServer(url, user, pass string) Server {
@@ -33,6 +35,9 @@ func getClient() *http.Client {
 }
 
 func (s *Server) Login() error {
+	if s.isAuthenticated {
+		return nil
+	}
 	url := s.url + "/fmi/admin/api/v1/user/login"
 	loginInfo := struct {
 		Username string `json:"username"`
@@ -59,7 +64,7 @@ func (s *Server) Login() error {
 	if loginResult.Result == 0 {
 		s.tokenTime = time.Now()
 		s.token = loginResult.Token
-
+		s.isAuthenticated = true
 		// We have a token, keep it and renew when needed
 		ticker := time.NewTicker(14 * time.Minute)
 		s.quit = make(chan struct{})
@@ -74,6 +79,7 @@ func (s *Server) Login() error {
 
 				case <-s.quit:
 					ticker.Stop()
+					fmt.Println("Renew")
 					return
 				}
 			}
@@ -105,6 +111,7 @@ func (s *Server) Logout() error {
 	if logoutInfo.Result != 0 {
 		return errors.New("Failed to logout")
 	}
+	s.isAuthenticated = false
 	close(s.quit)
 	return nil
 }
