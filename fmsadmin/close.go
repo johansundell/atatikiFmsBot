@@ -13,12 +13,12 @@ func (s *Server) Close(id int, message string) error {
 	body := struct {
 		Message string `json:"message"`
 	}{message}
-	b, err := s.put(url, &body)
+	b, err := s.makeCall(url, "PUT", &body)
 	_ = b
 	return err
 }
 
-func (s *Server) put(url string, inf interface{}) ([]byte, error) {
+func (s *Server) makeCall(url, method string, inf interface{}) ([]byte, error) {
 
 	var err error = nil
 	req := &http.Request{}
@@ -28,9 +28,9 @@ func (s *Server) put(url string, inf interface{}) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		req, err = http.NewRequest("PUT", url, b)
+		req, err = http.NewRequest(method, url, b)
 	} else {
-		req, err = http.NewRequest("PUT", url, nil)
+		req, err = http.NewRequest(method, url, nil)
 	}
 	if err != nil {
 		return nil, err
